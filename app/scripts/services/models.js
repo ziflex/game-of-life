@@ -2,52 +2,70 @@
 angular.module('gol.factories', ['gol.constants'])
     .service('$models', function($commonEvents, $cellGens) {
         this.create_Cell = function (x, y) {
-            return (function() {
-
-                ///<summary> Private properties </summary>
-                var _x = x,
+            return (function(eventEmitter) {
+                /// <summary>
+                /// Private properties
+                /// </summary>
+                var _self,
+                    _x = x,
                     _y = y,
                     _generation = $cellGens.none,
                     _isAlive = false,
-                    _eventEmitter = this.create_eventEmitter();
+                    _eventEmitter = eventEmitter;
 
-                ///<summary> Private methods </summary>
-                var _changeGen = function (nextGen) {
-                    _generation = nextGen;
+                /// <summary>
+                /// Private methods
+                /// </summary>
+                var _validateChangingGen = function (current, next) {
+                        var isValid = true;
 
-                    switch (_generation) {
-                        case $cellGens.young:
-                            _isAlive = true;
-                            break;
-                        case $cellGens.old:
-                            _isAlive = true;
-                            break;
-                        default:
-                            _isAlive = false;
-                            break;
-                    }
+                        if (current === $cellGens.none && next === $cellGens.old) {
+                            isValid = false;
+                        }
 
-                    _eventEmitter.fire($commonEvents.changed, {
-                        coordinates: {
-                            x: _x,
-                            y: _y
-                        },
-                        isAlive: _isAlive
-                    });
-                }
+                        if (!isValid) {
+                            throw "Not allowed generation transition!"
+                        }
+                    },
+                    _changeGen = function (nextGen) {
+                        var prevGen = _generation;
+                        _generation = nextGen;
 
-                return {
+                        _validateChangingGen(prevGen, nextGen);
+
+                        switch (_generation) {
+                            case $cellGens.young:
+                                _isAlive = true;
+                                break;
+                            case $cellGens.old:
+                                _isAlive = true;
+                                break;
+                            default:
+                                _isAlive = false;
+                                break;
+                        }
+
+                        _eventEmitter.fire($commonEvents.changed, {cell: _self, from: prevGen, to: nextGen});
+                };
+
+                _self = {
                     gen: function () {
                         return _generation;
                     },
                     kill: function () {
                         _changeGen($cellGens.none);
+
+                        return _self;
                     },
                     born: function () {
                         _changeGen($cellGens.young);
+
+                        return _self;
                     },
                     persist: function () {
-                        _generation = $cellGens.old;
+                        _changeGen($cellGens.old);
+
+                        return _self;
                     },
                     isAlive: function () {
                         return _isAlive;
@@ -60,21 +78,35 @@ angular.module('gol.factories', ['gol.constants'])
                     },
                     on: function (eventName, eventHandler) {
                         _eventEmitter.on(eventName, eventHandler)
+                        return _self;
                     },
                     off: function (eventName, eventHandler) {
                         _eventEmitter.on(eventName, eventHandler)
+                        return _self;
                     }
-                }
-            })();
+                };
+
+                return _self;
+            })(this.create_eventEmitter());
         };
 
         this.create_cellCollection = function () {
             return (function () {
-                var _data, _count, _indexOf;
 
-                _data = {};
-                _count = 0;
-                _indexOf = function (p1, p2) {
+                /// <summary>
+                /// Private properties
+                /// </summary>
+                var _self,
+                    _data = {},
+                    _count = 0,
+                    _transaction = false,
+                    _toDelete = [],
+                    _toAdd = [];
+
+                /// <summary>
+                /// Private methods
+                /// </summary>
+                var _indexOf = function (p1, p2) {
                     var result;
 
                     if(typeof p2 === 'undefined') {
@@ -84,16 +116,20 @@ angular.module('gol.factories', ['gol.constants'])
                     }
 
                     return result;
-                }
+                    };
 
-                return {
+                _self = {
                     add: function (cell) {
                         if (!cell) {
                             return;
                         }
 
-                        _data[_indexOf(cell)] = cell;
-                        _count += 1;
+                        if (!_transaction) {
+                            _data[_indexOf(cell)] = cell;
+                            _count += 1;
+                        } else {
+                            _toAdd.push(cell);
+                        }
                     },
                     get: function (x, y) {
                         return _data[_indexOf(x, y)];
@@ -103,8 +139,12 @@ angular.module('gol.factories', ['gol.constants'])
                             return;
                         }
 
-                        delete _data[_indexOf(cell)];
-                        _count -= 1;
+                        if  (!_transaction) {
+                            delete _data[_indexOf(cell)];
+                            _count -= 1;
+                        } else {
+                            _toDelete.push(cell);
+                        }
                     },
                     count: function () {
                         return _count;
@@ -115,7 +155,7 @@ angular.module('gol.factories', ['gol.constants'])
                         for (prop in _data) {
                             if (_data[prop] && _data.hasOwnProperty(prop)) {
                                 if (callback) {
-                                    callback.apply(this, _data[prop]);
+                                    callback(_data[prop]);
                                 }
                             }
                         }
@@ -132,13 +172,32 @@ angular.module('gol.factories', ['gol.constants'])
                         _count = 0;
                     },
                     contains: function (cell){
-                        if (_data[_indexOf[cell]]){
+                        if (_data[_indexOf(cell)]){
                             return true;
                         }
 
                         return false;
+                    },
+                    beginTransaction: function () {
+                        _transaction = true;
+
+                        _toAdd.length = 0;
+                        _toDelete.length = 0;
+                    },
+                    commitTransaction: function () {
+                        _transaction = false;
+
+                        _toAdd.each(function(c){
+                            _self.add(c);
+                        });
+
+                        _toDelete.each(function(c){
+                            _self.remove(c);
+                        });
                     }
-                }
+                };
+
+                return _self;
             })();
         };
 
@@ -181,7 +240,6 @@ angular.module('gol.factories', ['gol.constants'])
                     fire: function (eventName, args) {
                         var i, max, subs;
                         eventName = eventName || 'any';
-                        args = args | {};
 
                         if (!_subscribers[eventName]) {
                             return;

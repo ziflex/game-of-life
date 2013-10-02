@@ -1,14 +1,33 @@
 'use strict';
 angular.module('gol.controllers', ['gol.services'])
     .controller('MainCtrl', function ($scope, $game, $gameEvents) {
+        /// <summary>
+        /// Private properties
+        /// </summary>
         var _startTime,
             _endTime,
             _resultTime,
-            _selected = {},
-            _onCellEvent = function (cell) {
+            _selected = {};
 
+        /// <summary>
+        /// Private methods
+        /// </summary>
+        var _getIndexOf = function (x, y) {
+                return x + '_' + y;
             },
-            _getElementByXY;
+            _onCellEvent = function (eventName, options) {
+                switch(event.event){
+                    case $gameEvents.onCellAlive:
+                        break;
+                    case $gameEvents.onCellDead:
+                        break;
+                    default:
+                        break;
+                }
+            },
+            _getElementByXY = function (x, y) {
+
+            };
 
         $scope.isDisabled = false;
         $scope.selected = {};
@@ -16,7 +35,7 @@ angular.module('gol.controllers', ['gol.services'])
             return new Array(num);
         };
         $scope.onCellClick = function (el) {
-            var id = el.$index + '_' + el.$parent.$index;
+            var id = _getIndexOf(el.$index, el.$parent.$index);
             el.selected = !el.selected;
 
             // weird... revert logic..
@@ -40,7 +59,7 @@ angular.module('gol.controllers', ['gol.services'])
 
             $game.on($gameEvents.onStop, function() {
                 _endTime = new Date();
-                _resultTime = endTime - startTime;
+                _resultTime = _endTime - _startTime;
 
                 $scope.isDisabled = false;
             });

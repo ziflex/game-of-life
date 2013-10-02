@@ -1,28 +1,33 @@
 "use strict";
 angular.module('gol.services', ['gol.factories', 'gol.constants'])
     .service('$game', function($models, $gameStatus, $commonEvents, $gameEvents, $cellGens) {
-        ///<summary> Private properties </summary>
-
+        /// <summary>
+        /// Private properties
+        /// </summary>
         var _xMax = 0,
             _yMax = 0,
             _status = $gameStatus.stopped,
             _eventEmitter = $models.create_eventEmitter(),
-            _pool = [],
-            _map = {};
+            _pool = [], // cells pool
+            _map = {}, // cells gen map
+            _changes = false; // cells changes per cycle
 
         // add some 'collection magic' to objects
-        Object.prototype.each = function(callback){
-            var prop;
+        if (!Object.prototype.each) {
+            Object.prototype.each = function(callback){
+                var prop;
 
-            for (prop in this) {
-                if(this[prop] && this.hasOwnProperty(prop)){
-                    callback(this[prop]);
+                for (prop in this) {
+                    if(this[prop] && this.hasOwnProperty(prop) && typeof (this[prop]) !== 'function'){
+                        callback(this[prop]);
+                    }
                 }
-            }
-        };
+            };
+        }
 
-        ///<summary> Private methods </summary>
-
+        /// <summary>
+        /// Private methods
+        /// </summary>
         var _eachCell = function (callback, from, where) {
                 var func = function (collection) {
                     collection.each(function(el){
@@ -62,6 +67,17 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
 
                 return result;
         },
+            _moveCell = function (cell, from, to) {
+                var f = _map[from],
+                    t = _map[to];
+
+                if(f && t){
+                    if (f.contains(cell)){
+                        f.remove(cell);
+                        t.add(cell);
+                    }
+                }
+            },
             _findNeighbors = function (cell) {
                 var prop,
                     neighbor,
@@ -82,11 +98,11 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                         x = cell.x() + offset.x;
                         y = cell.y() + offset.y;
 
-                        if (x <= 0) {
+                        if (x < 0) {
                             x = _xMax;
                         }
 
-                        if (y <= 0) {
+                        if (y < 0) {
                             y = _yMax;
                         }
 
@@ -104,8 +120,8 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
 
                 return result;
             },
-            _lifeExists = function () {
-                return _map[$cellGens.young].count() > 0 || _map[$cellGens.old].count() > 0;
+            _continue = function () {
+                return (_map[$cellGens.young].count() > 0 || _map[$cellGens.old].count() > 0) && _changes;
             },
             _populate = function (xMax, yMax) {
                 var x,
@@ -135,20 +151,6 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                     })
                 }
             },
-            _transferCell = function (cell, from, to) {
-                var f = _map[from],
-                    t = _map[to];
-
-                if(f && t){
-                    if (f.contains(cell)){
-                        f.remove(cell);
-                        t.add(cell);
-                    }
-                }
-            },
-            _transfer = function (){
-
-            },
             _lifeCycle = function (callback) {
                 var func = function (el) {
                     callback(el, _findNeighbors(el));
@@ -157,18 +159,46 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                 // update young generation
                 _eachCell(function (el){
                     el.persist();
-
-                    _map[$cellGens.old].add(el);
                 }, $cellGens.young);
 
                 _free($cellGens.young);
 
+                // hides cells migration
+                _map.each(function(m){
+                    m.beginTransaction();
+                });
+
+                _changes = false;
+
                 _eachCell(func, $cellGens.old);
                 _eachCell(func, $cellGens.none);
+
+                // complete cells migration
+                _map.each(function(m){
+                    m.commitTransaction();
+                });
             },
-            _onCellChange = function (options) {
-//                _eventEmitter.fire($gameEvents.onCellDead, {event: $gameEvents.onCellDead, x: cell.x(), y: cell.y()})
-//                transition.push(cell);
+            _onCellChange = function (eventName, options) {
+                if (!options || _status === $gameStatus.stopped) {
+                    return;
+                }
+
+                _changes = true;
+
+                switch(options.to) {
+                    case $cellGens.none:
+                        _eventEmitter.fire($gameEvents.onCellDead, { event: $gameEvents.onCellDead, coordinates: {x: options.cell.x(), y: options.cell.y()} });
+                        break;
+                    case $cellGens.young:
+                        _eventEmitter.fire($gameEvents.onCellAlive, { event: $gameEvents.onCellAlive, coordinates: {x: options.cell.x(), y: options.cell.y()} });
+                        break;
+                    case $cellGens.old:
+                        break;
+                    default:
+                        break;
+                }
+
+                _moveCell(options.cell, options.from, options.to);
             };
 
         _map[$cellGens.none] = $models.create_cellCollection();
@@ -176,21 +206,22 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
         _map[$cellGens.old] = $models.create_cellCollection();
 
         this.start = function (options) {
-            var i, // just counter
-                maxLength, //transition array length
-                c, // temporary ref to cell
-                transition = []; // collection of cells that must be transfered to different state collections
-
             _status = $gameStatus.started;
             _eventEmitter.fire($gameEvents.onStart);
 
+            _xMax = options.xMax;
+            _yMax = options.yMax;
+
+            // fill collections
             _populate(options.xMax, options.yMax);
+
+            // starting cells
             options.selected.each(function(coordinates) {
                 _findCell(coordinates, $cellGens.none).born();
             });
 
             // cells life cycle
-            while(_lifeExists()) {
+            while(_continue()) {
                 _lifeCycle(function(cell, neighbors){
                     neighbors = neighbors || [];
 
@@ -206,35 +237,19 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                         }
                     }
                 });
-
-                // transfer cells
-                // TODO: not good approach! must be something more efficient...
-                if (transition.length > 0) {
-                    maxLength = transition.length;
-                    for (i = 0; i < maxLength; i += 1) {
-                        c = transition.pull[i];
-                        if (c) {
-                            switch(c.gen()){
-                                case $cellGens.none:
-                                    _transferCell(c, $cellGens.old, $cellGens.none);
-                                    break;
-                                case $cellGens.young:
-                                    _transferCell(c, $cellGens.none, $cellGens.young);
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                }
             }
 
             this.stop();
         };
 
         this.stop = function () {
-            _free();
             _status = $gameStatus.stopped;
+            _free();
+
+            _pool.each(function(c){
+                c.kill();
+            });
+
             _eventEmitter.fire($gameEvents.onStop);
         };
 
