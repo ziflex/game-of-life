@@ -6,8 +6,7 @@ angular.module('gol.controllers', ['gol.services'])
         /// </summary>
         var _startTime,
             _endTime,
-            _resultTime,
-            _selected = {};
+            _resultTime;
 
         /// <summary>
         /// Private methods
@@ -15,18 +14,42 @@ angular.module('gol.controllers', ['gol.services'])
         var _getIndexOf = function (x, y) {
                 return x + '_' + y;
             },
+            _changeCellState = function (cell,selected) {
+                cell.selected = !selected;
+            },
             _onCellEvent = function (eventName, options) {
-                switch(event.event){
+                var cell = _getCell(options.coordinates.x, options.coordinates.y);
+
+                if (!cell) {
+                    return;
+                }
+
+                switch(eventName){
                     case $gameEvents.onCellAlive:
+                        _changeCellState(cell, true);
                         break;
                     case $gameEvents.onCellDead:
+                        _changeCellState(cell, false);
                         break;
                     default:
                         break;
                 }
             },
-            _getElementByXY = function (x, y) {
+            _getCell = function (x, y) {
+                return $('#' + _getIndexOf(x, y)).scope();
+            },
+            _getSelected = function () {
+                var result = [], scope;
 
+                 $('td.success').each(function (index, el){
+                     scope = $(el).scope();
+                     result[_getIndexOf(scope.$index, scope.$parent.$index)] = {
+                         x: scope.$index,
+                         y: scope.$parent.$index
+                     };
+                 });
+
+                return result;
             };
 
         $scope.isDisabled = false;
@@ -37,20 +60,9 @@ angular.module('gol.controllers', ['gol.services'])
         $scope.onCellClick = function (el) {
             var id = _getIndexOf(el.$index, el.$parent.$index);
             el.selected = !el.selected;
-
-            // weird... revert logic..
-            if (!el.selected) {
-                _selected[id] = {
-                    x: el.$index,
-                    y: el.$parent.$index
-                };
-            } else {
-                if (_selected[id]) {
-                    delete _selected[id];
-                }
-            }
         },
         $scope.start = function(){
+
             $scope.isDisabled = true;
 
             $game.on($gameEvents.onStart, function() {
@@ -71,7 +83,7 @@ angular.module('gol.controllers', ['gol.services'])
             $game.start({
                 xMax: $scope.xMax,
                 yMax: $scope.yMax,
-                selected: _selected
+                selected: _getSelected()
             });
         };
     });

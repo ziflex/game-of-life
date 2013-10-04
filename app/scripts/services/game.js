@@ -1,6 +1,6 @@
 "use strict";
-angular.module('gol.services', ['gol.factories', 'gol.constants'])
-    .service('$game', function($models, $gameStatus, $commonEvents, $gameEvents, $cellGens) {
+angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants'])
+    .service('$game', function($logger, $models, $gameStatus, $commonEvents, $gameEvents, $cellGens) {
         /// <summary>
         /// Private properties
         /// </summary>
@@ -10,18 +10,45 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
             _eventEmitter = $models.create_eventEmitter(),
             _pool = [], // cells pool
             _map = {}, // cells gen map
-            _changes = false; // cells changes per cycle
+            _changes = false, // cells changes per cycle
+            _lastCoordinates = [],
+            _cycleCount = 0;
 
         // add some 'collection magic' to objects
         if (!Object.prototype.each) {
             Object.prototype.each = function(callback){
-                var prop;
+                var prop, result;
+
+                if (!callback){
+                    return;
+                }
 
                 for (prop in this) {
                     if(this[prop] && this.hasOwnProperty(prop) && typeof (this[prop]) !== 'function'){
-                        callback(this[prop]);
+                        result = callback(this[prop], prop);
+
+                        // check if we need to exit from loop
+                        if (typeof (result) === 'boolean') {
+                            if (result === false) {
+                                break;
+                            }
+                        }
                     }
                 }
+            };
+        }
+
+        if (!Object.prototype.count) {
+            Object.prototype.count = function(callback){
+                var count = 0;
+
+                return (function(){
+                    this.each(function () {
+                        count += 1;
+                    });
+
+                    return count;
+                })();
             };
         }
 
@@ -46,23 +73,38 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                     return;
                 }
 
-                if (from && _map[from]){
+                if (typeof (from) === 'string' && _map[from]) {
                     func(_map[from]);
+                } else if (typeof (from) === 'object' && from.constructor.toString() === 'function Array() { [native code] }') {
+                    from.each(function(f){
+                        _eachCell(callback, f, where);
+                    });
                 } else {
                     _map.each(func);
                 }
             },
             _findCell = function (coordinates, from) {
-                var result;
+                var result,
+                    func = function (f) {
+                        result = _findCell(coordinates, f);
 
-                if (from && _map[from]){
+                        if(result) {
+                            return false;
+                        }
+                };
+
+                if (typeof (from) === 'string' && _map[from]) {
                     result = _map[from].get(coordinates.x, coordinates.y);
                 } else {
-                    _map.each(function (g) {
-                        if (!result) {
-                            result = g.get(coordinates.x, coordinates.y);
-                        }
-                    })
+                    if (typeof (from) === 'object' && from.constructor.toString() === 'function Array() { [native code] }'){
+                        from.each(function(f){
+                            return func(f);
+                        });
+                    } else {
+                        _map.each(function (c, f){
+                            return func(f);
+                        });
+                    }
                 }
 
                 return result;
@@ -79,8 +121,7 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                 }
             },
             _findNeighbors = function (cell) {
-                var prop,
-                    neighbor,
+                var neighbor,
                     result = [],
                     offsets = [
                         {x: -1, y: 0},
@@ -121,7 +162,20 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                 return result;
             },
             _continue = function () {
-                return (_map[$cellGens.young].count() > 0 || _map[$cellGens.old].count() > 0) && _changes;
+                var c,
+                    i,
+                    result = (_map[$cellGens.young].count() > 0 || _map[$cellGens.old].count() > 0) && _changes;
+
+                if (result) {
+                    for (i = 0; i < _lastCoordinates.length; i += 1) {
+                        if (!_findCell(_lastCoordinates[i], [$cellGens.young, $cellGens.old])){
+                            result = false;
+                            break;
+                        }
+                    }
+                }
+
+                return result;
             },
             _populate = function (xMax, yMax) {
                 var x,
@@ -156,6 +210,15 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                     callback(el, _findNeighbors(el));
                 };
 
+                _cycleCount += 1;
+                $logger.write('Cycle number {0}', _cycleCount);
+
+                // save the previous cells position
+                _lastCoordinates.length = 0;
+                _eachCell(function(c){
+                    _lastCoordinates.push({x: c.x(), y: c.y()});
+                }, [$cellGens.young,  $cellGens.old]);
+
                 // update young generation
                 _eachCell(function (el){
                     el.persist();
@@ -163,15 +226,13 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
 
                 _free($cellGens.young);
 
-                // hides cells migration
+                // start cells migration
                 _map.each(function(m){
                     m.beginTransaction();
                 });
 
                 _changes = false;
-
-                _eachCell(func, $cellGens.old);
-                _eachCell(func, $cellGens.none);
+                _eachCell(func, [$cellGens.old,  $cellGens.none]);
 
                 // complete cells migration
                 _map.each(function(m){
@@ -199,6 +260,8 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
                 }
 
                 _moveCell(options.cell, options.from, options.to);
+
+                $logger.write('Cell x:{0} y:{1} is {2}.', options.cell.x(), options.cell.y(), options.to);
             };
 
         _map[$cellGens.none] = $models.create_cellCollection();
@@ -206,11 +269,14 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
         _map[$cellGens.old] = $models.create_cellCollection();
 
         this.start = function (options) {
+            $logger.write('Game is started.');
+
             _status = $gameStatus.started;
             _eventEmitter.fire($gameEvents.onStart);
 
             _xMax = options.xMax;
             _yMax = options.yMax;
+            _cycleCount = 0;
 
             // fill collections
             _populate(options.xMax, options.yMax);
@@ -244,13 +310,15 @@ angular.module('gol.services', ['gol.factories', 'gol.constants'])
 
         this.stop = function () {
             _status = $gameStatus.stopped;
+
+            _eachCell(function(c){
+                c.kill();
+            }, [$cellGens.young, $cellGens.old]);
+
             _free();
 
-            _pool.each(function(c){
-                c.kill();
-            });
-
             _eventEmitter.fire($gameEvents.onStop);
+            $logger.write('Game is stopped.');
         };
 
         this.get_status = function () {

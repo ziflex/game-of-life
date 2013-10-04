@@ -150,12 +150,21 @@ angular.module('gol.factories', ['gol.constants'])
                         return _count;
                     },
                     each: function (callback) {
-                        var prop;
+                        var prop, result;
+
+                        if (!callback) {
+                            return;
+                        }
 
                         for (prop in _data) {
                             if (_data[prop] && _data.hasOwnProperty(prop)) {
-                                if (callback) {
-                                    callback(_data[prop]);
+                                result = callback(_data[prop]);
+
+                                // check if we need to exit from loop
+                                if (typeof (result) === 'boolean') {
+                                    if (result === false) {
+                                        break;
+                                    }
                                 }
                             }
                         }
