@@ -164,15 +164,17 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
             _continue = function () {
                 var c,
                     i,
+                    matches = 0,
                     result = (_map[$cellGens.young].count() > 0 || _map[$cellGens.old].count() > 0) && _changes;
 
-                if (result) {
+                if (result && _lastCoordinates.length > 0) {
                     for (i = 0; i < _lastCoordinates.length; i += 1) {
-                        if (!_findCell(_lastCoordinates[i], [$cellGens.young, $cellGens.old])){
-                            result = false;
-                            break;
+                        if (_findCell(_lastCoordinates[i], [$cellGens.young, $cellGens.old])){
+                            matches += 1;
                         }
                     }
+
+                    result = !(matches === _lastCoordinates.length);
                 }
 
                 return result;
@@ -316,6 +318,7 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
             }, [$cellGens.young, $cellGens.old]);
 
             _free();
+            _lastCoordinates.length = 0;
 
             _eventEmitter.fire($gameEvents.onStop);
             $logger.write('Game is stopped.');
