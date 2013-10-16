@@ -12,7 +12,16 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
             _map = {}, // cells gen map
             _changes = false, // cells changes per cycle
             _lastCoordinates = [],
-            _cycleCount = 0;
+            _cycleCount = 0,
+            _offsets = [
+                {x: -1, y: 0},
+                {x: -1, y: 1},
+                {x: -1, y: -1},
+                {x: 0, y: 1},
+                {x: 0, y: -1},
+                {x: 1, y: 0},
+                {x: 1, y: 1},
+                {x: 1, y: -1}];
 
         // add some 'collection magic' to objects
         if (!Object.prototype.each) {
@@ -123,16 +132,6 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
             _findNeighbors = function (cell) {
                 var neighbor,
                     result = [],
-                    offsets = [
-                        {x: -1, y: 0},
-                        {x: -1, y: 1},
-                        {x: -1, y: -1},
-                        {x: 0, y: 1},
-                        {x: 0, y: -1},
-                        {x: 1, y: 0},
-                        {x: 1, y: 1},
-                        {x: 1, y: -1}],
-
                     getNeighborCoordinates = function (offset) {
                         var x, y;
 
@@ -150,7 +149,7 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
                         return {x : x, y: y};
                     };
 
-                offsets.each(function(offset){
+                _offsets.each(function(offset){
                     // get only live cells and not of the current generation
                     neighbor = _findCell(getNeighborCoordinates(offset), $cellGens.old);
 
@@ -162,19 +161,17 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
                 return result;
             },
             _continue = function () {
-                var c,
-                    i,
-                    matches = 0,
+                var matchedPosition,
+                    encodedPosition,
                     result = (_map[$cellGens.young].count() > 0 || _map[$cellGens.old].count() > 0) && _changes;
 
                 if (result && _lastCoordinates.length > 0) {
-                    for (i = 0; i < _lastCoordinates.length; i += 1) {
-                        if (_findCell(_lastCoordinates[i], [$cellGens.young, $cellGens.old])){
-                            matches += 1;
-                        }
-                    }
+                    encodedPosition = _encodePosition([$cellGens.young, $cellGens.old]);
+                    matchedPosition = _lastCoordinates[encodedPosition];
 
-                    result = !(matches === _lastCoordinates.length);
+                    if  (matchedPosition) {
+                        result = false;
+                    }
                 }
 
                 return result;
@@ -216,16 +213,14 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
                 $logger.write('Cycle number {0}', _cycleCount);
 
                 // save the previous cells position
-                _lastCoordinates.length = 0;
-                _eachCell(function(c){
-                    _lastCoordinates.push({x: c.x(), y: c.y()});
-                }, [$cellGens.young,  $cellGens.old]);
+                _lastCoordinates.push(_encodePosition([ $cellGens.young, $cellGens.old]));
 
                 // update young generation
                 _eachCell(function (el){
                     el.persist();
                 }, $cellGens.young);
 
+                // release young gen collection
                 _free($cellGens.young);
 
                 // start cells migration
@@ -233,7 +228,10 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
                     m.beginTransaction();
                 });
 
+                // reset the flag
                 _changes = false;
+
+                // start find neighbors
                 _eachCell(func, [$cellGens.old,  $cellGens.none]);
 
                 // complete cells migration
@@ -246,6 +244,7 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
                     return;
                 }
 
+                // update the flag
                 _changes = true;
 
                 switch(options.to) {
@@ -264,6 +263,15 @@ angular.module('gol.services', ['gol.utilities', 'gol.factories', 'gol.constants
                 _moveCell(options.cell, options.from, options.to);
 
                 $logger.write('Cell x:{0} y:{1} is {2}.', options.cell.x(), options.cell.y(), options.to);
+            },
+            _encodePosition = function (from) {
+                var result = '';
+
+                _eachCell(function(c){
+                    result += 'x' + c.x() + 'y' + c.y() + ';';
+                }, from);
+
+                return result;
             };
 
         _map[$cellGens.none] = $models.create_cellCollection();

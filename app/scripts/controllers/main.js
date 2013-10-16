@@ -15,6 +15,12 @@ angular.module('gol.controllers', ['gol.services'])
                 return x + '_' + y;
             },
             _changeCellState = function (cell,selected) {
+                var i = 0, timeout = 1000000;
+
+                while(i < timeout){
+                    i += 1;
+                }
+
                 cell.selected = !selected;
             },
             _onCellEvent = function (eventName, options) {
@@ -85,5 +91,15 @@ angular.module('gol.controllers', ['gol.services'])
                 yMax: $scope.yMax,
                 selected: _getSelected()
             });
+
+//            setTimeout(function(){
+//
+//            }, 1);
+//
+//            if (!!window.Worker)
+//            {
+//            } else {
+//
+//            }
         };
     });
