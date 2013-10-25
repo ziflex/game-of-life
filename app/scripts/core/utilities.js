@@ -1,8 +1,8 @@
 'use strict'
 
-angular.module('gol.utilities', [])
-    .service('$logger', function() {
-        this.write = function(){
+GameOfLife.register('$logger', function() {
+    return {
+        write: function() {
             var str = arguments[0],
                 args = arguments;
 
@@ -12,5 +12,6 @@ angular.module('gol.utilities', [])
                     : match
                     ;
             }));
-        };
-    });
+        }
+    }
+});
