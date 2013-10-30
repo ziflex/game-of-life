@@ -17,43 +17,6 @@ GameOfLife.register('$game',
                 _lastCoordinates = [],
                 _cycleCount = 0;
 
-            // add some 'collection magic' to objects
-            if (!Object.prototype.each) {
-                Object.prototype.each = function(callback){
-                    var prop, result;
-
-                    if (!callback){
-                        return;
-                    }
-
-                    for (prop in this) {
-                        if(this[prop] && this.hasOwnProperty(prop) && typeof (this[prop]) !== 'function'){
-                            result = callback(this[prop], prop);
-
-                            // check if we need to exit from loop
-                            if (typeof (result) === 'boolean') {
-                                if (result === false) {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                };
-            }
-
-            if (!Object.prototype.count) {
-                Object.prototype.count = function(callback){
-                    var count = 0;
-
-                    return (function(){
-                        this.each(function () {
-                            count += 1;
-                        });
-
-                        return count;
-                    })();
-                };
-            }
 
             /// <summary>
             /// Private methods
@@ -91,9 +54,7 @@ GameOfLife.register('$game',
                         func = function (f) {
                             result = _findCell(coordinates, f);
 
-                            if(result) {
-                                return false;
-                            }
+                            return result ? false : true;
                         };
 
                     if (typeof (from) === 'string' && _map[from]) {
@@ -165,8 +126,7 @@ GameOfLife.register('$game',
                     return result;
                 },
                 _continue = function () {
-                    var c,
-                        i,
+                    var i,
                         result = (_map[$cellGens.young].count() > 0 || _map[$cellGens.old].count() > 0) && _changes;
 
                     if (result) {
@@ -334,7 +294,7 @@ GameOfLife.register('$game',
 
             _self.off = function (eventName, handler) {
                 _eventEmitter.off(eventName, handler);
-            }
+            };
 
             return _self;
         })();

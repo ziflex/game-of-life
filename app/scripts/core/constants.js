@@ -1,31 +1,43 @@
 "use strict";
 
-GameOfLife.register('$commonEvents', function(){
-    return {
-        changed: 'changed'
-    };
+namespaces.register({
+    namespace: 'core.constants.$commonEvents',
+    init: function () {
+        return {
+            changed: 'changed'
+        };
+    }
 });
 
-GameOfLife.register('$gameStatuses', function () {
-    return {
-        started: 'started',
-        stopped: 'stopped'
-    };
+namespaces.register({
+    namespace: 'core.constants.$gameStatuses',
+    init: function () {
+        return {
+            started: 'started',
+            stopped: 'stopped'
+        };
+    }
 });
 
-GameOfLife.register('$gameEvents', function() {
-    return {
-        onStart: 'onStart',
-        onStop: 'onStop',
-        onCellDead: 'onCellDead',
-        onCellAlive: 'onCellAlive'
-    };
+namespaces.register({
+    namespace: 'core.constants.$gameEvents',
+    init: function () {
+        return {
+            onStart: 'onStart',
+            onStop: 'onStop',
+            onCellDead: 'onCellDead',
+            onCellAlive: 'onCellAlive'
+        };
+    }
 });
 
-GameOfLife.register('$cellGenerations', function() {
-    return {
-        none: 'none',
-        young: 'young',
-        old: 'old'
-    };
+namespaces.register({
+    namespace: 'core.constants.$cellGenerations',
+    init: function () {
+        return {
+            none: 'none',
+            young: 'young',
+            old: 'old'
+        };
+    }
 });
