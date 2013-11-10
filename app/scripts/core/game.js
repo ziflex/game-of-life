@@ -1,7 +1,13 @@
 "use strict";
 
-GameOfLife.register('$game',
-    function($logger, $eventEmitter, $cell, $cellCollection, $gameStatus, $commonEvents, $gameEvents, $cellGens) {
+namespaces.register({
+    path: 'core.$game',
+    dependencies: {
+        'core.utilities' : ['$logger'],
+        'core.models' : ['$hash', '$eventEmitter', '$cell', '$cellCollection'],
+        'core.constants' : ['$gameStatuses', '$commonEvents', '$gameEvents', '$cellGenerations']
+    },
+    init: function($logger, $hash, $eventEmitter, $cell, $cellCollection, $gameStatus, $commonEvents, $gameEvents, $cellGens) {
         return (function() {
             /// <summary>
             /// Private properties
@@ -298,6 +304,5 @@ GameOfLife.register('$game',
 
             return _self;
         })();
-    },
-    ['$logger', '$eventEmitter', '$cell', '$cellCollection', '$gameStatuses', '$commonEvents', '$gameEvents', '$cellGenerations']
+    }}
 );

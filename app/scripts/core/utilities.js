@@ -1,7 +1,7 @@
 'use strict';
 
 namespaces.register({
-    namespace: 'core.utilities.$logger',
+    path: 'core.utilities.$logger',
     init: function () {
         return {
             write: function() {

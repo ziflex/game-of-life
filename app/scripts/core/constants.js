@@ -1,7 +1,7 @@
 "use strict";
 
 namespaces.register({
-    namespace: 'core.constants.$commonEvents',
+    path: 'core.constants.$commonEvents',
     init: function () {
         return {
             changed: 'changed'
@@ -10,7 +10,7 @@ namespaces.register({
 });
 
 namespaces.register({
-    namespace: 'core.constants.$gameStatuses',
+    path: 'core.constants.$gameStatuses',
     init: function () {
         return {
             started: 'started',
@@ -20,7 +20,7 @@ namespaces.register({
 });
 
 namespaces.register({
-    namespace: 'core.constants.$gameEvents',
+    path: 'core.constants.$gameEvents',
     init: function () {
         return {
             onStart: 'onStart',
@@ -32,7 +32,7 @@ namespaces.register({
 });
 
 namespaces.register({
-    namespace: 'core.constants.$cellGenerations',
+    path: 'core.constants.$cellGenerations',
     init: function () {
         return {
             none: 'none',

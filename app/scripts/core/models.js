@@ -1,12 +1,12 @@
 "use strict";
 
 namespaces.register({
-    namespace: 'core.models.$cellCollection',
+    path: 'core.models.$cellCollection',
     dependencies: {
-        'core.constants' : ['$commonEvents', '$cellGenerations'],
-        'core.models' : ['$eventEmitter', '$hash']
+        'core.models' : ['$eventEmitter', '$hash'],
+        'core.constants' : ['$commonEvents', '$cellGenerations']
     },
-    init: function($hash) {
+    init: function($eventEmitter, $hash, $commonEvents, $cellGenerations) {
         return function () {
             return (function () {
 
@@ -99,12 +99,12 @@ namespaces.register({
 });
 
 namespaces.register({
-    namespace: 'core.models.$cell',
+    path: 'core.models.$cell',
     dependencies: {
-        'core.constants' : ['$commonEvents', '$cellGenerations'],
-        'core.models' : ['$eventEmitter']
+        'core.models' : ['$eventEmitter'],
+        'core.constants' : ['$commonEvents', '$cellGenerations']
     },
-    init: function($commonEvents, $cellGenerations, $eventEmitter) {
+    init: function($eventEmitter, $commonEvents, $cellGenerations) {
         return function () {
             return (function(x, y) {
                 /// <summary>
@@ -197,7 +197,7 @@ namespaces.register({
 });
 
 namespaces.register({
-    namespace: 'core.models.$hash',
+    path: 'core.models.$hash',
     init: function (){
         return function () {
             return (function() {
@@ -273,7 +273,7 @@ namespaces.register({
 });
 
 namespaces.register({
-    namespace: 'core.models.$eventEmitter',
+    path: 'core.models.$eventEmitter',
     init: function () {
         return function() {
             return (function() {

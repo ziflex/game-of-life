@@ -30,28 +30,32 @@
 
           <div class="navbar-form" role="search">
               <div class="form-group">
-                  <input type="number" class="form-control" ng-disabled='isDisabled' placeholder="Columns" ng-model='xMax' value="10" min="10" required>
+                  <input type="number" class="form-control" data-action='setColumns' placeholder="Columns" value="10" min="10" required>
               </div>
               <div class="form-group">
-                  <input type="number" class="form-control" ng-disabled='isDisabled' placeholder="Rows" ng-model='yMax' value="10" min="10" required>
+                  <input type="number" class="form-control" data-action='setRows' placeholder="Rows" value="10" min="10" required>
               </div>
-              <button type="button" class="btn btn-default" ng-disabled='isDisabled' ng-click='start()'>Start</button>
+              <button type="button" class="btn btn-default" data-action='start'>Start</button>
           </div>
       </nav>
         <!--[if lt IE 7]>
           <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
+      <div class="container" id="matrix">
+      </div>
 
       <script src="bower_components/jquery/jquery.min.js"></script>
+      <script src="scripts/namespaces.js"></script>
       <script src="scripts/app.js"></script>
       <script src="scripts/core/utilities.js"></script>
       <script src="scripts/core/constants.js"></script>
       <script src="scripts/core/models.js"></script>
       <script src="scripts/core/game.js"></script>
+      <script src="scripts/ui/matrix.js"></script>
       <script>
           $(document).ready(function() {
-              GameOfLife.init();
+              namespaces.init();
           });
       </script>
     </body>
