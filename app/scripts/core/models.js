@@ -231,12 +231,16 @@ namespaces.register({
                     count: function () {
                         return _count;
                     },
-                    clear: function () {
-                        var prop;
+                    clear: function (select) {
+                        var prop, val;
+
+                        select = select || function (v) {  };
 
                         for (prop in _data) {
                             if(_data[prop] && _data.hasOwnProperty(prop)){
+                                val = _data[prop];
                                 delete _data[prop];
+                                select(val);
                             }
                         }
 
@@ -263,6 +267,17 @@ namespaces.register({
                             }
                         }
 
+                    },
+                    toArray: function (select) {
+                        var self = this, ret = [];
+
+                        select = select || function (v, k) { return v; };
+
+                        self.each(function(val, key) {
+                            ret.push(select(val, key));
+                        });
+
+                        return ret;
                     }
                 };
 
