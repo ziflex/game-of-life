@@ -11,6 +11,7 @@ namespaces.register({
                 /// </summary>
                 var _self = {},
                     _cells = {},
+                    _rows = {},
                     _$table,
                     _$parent,
                     _rowCount = 0,
@@ -42,9 +43,8 @@ namespaces.register({
                         _$parent = $(options.parent);
 
                         _$table = $('<table><tbody></tbody></table>');
+                        _$table.appendTo(_$parent);
                         _$table.addClass('table table-bordered');
-
-//                        _$parent.append(_$table);
 
                         _$table.on('click', 'td', function (event) {
                             var el = $(this);
@@ -64,7 +64,7 @@ namespaces.register({
                 _self.columns = function (value) {
                     if (value) {
                         _columnCount = value;
-                        self.render();
+                        _self.render();
                     }
 
                     return _columnCount;
@@ -73,7 +73,7 @@ namespaces.register({
                 _self.rows = function (value) {
                     if (value) {
                         _rowCount = value;
-                        self.render();
+                        _self.render();
                     }
 
                     return _rowCount;
@@ -84,47 +84,54 @@ namespaces.register({
                 };
 
                 _self.render = function () {
-                    var x, y, tr, td, span, id;
+                    var x, y, tr, td, span, id, childCount;
 
                     if (!_isInitialized) {
                         _init();
                     }
 
                     // remove all elements before rendering
-                    _$table.remove();
+                    _$table.children().remove();
 
                     for (y = 0; y <= _rowCount; y += 1) {
-                        tr = $('<tr></tr>');
+
+                        if (!_rows[y]) {
+                            _rows[y] = $('<tr></tr>');
+                        }
+
+                        tr = _rows[y];
+                        childCount = tr.children().length;
 
                         for(x = 0; x <= _columnCount; x += 1) {
                             id = _id(x, y);
-                            td = $('<td><span>&nbsp</span></td>');
-                            td.attr('id', id);
-                            td.attr('data-x', x);
-                            td.attr('data-y', y);
 
-                            tr.append(td);
+                            if (!_cells[id]) {
+                                td = $('<td><span>&nbsp</span></td>');
+                                td.attr('id', id);
+                                td.attr('data-x', x);
+                                td.attr('data-y', y);
+                                _cells[id] = td;
+                            }
 
-                            _cells[id] = td;
+                            if (x > childCount) {
+                                tr.append(_cells[id]);
+                            }
+                        }
+
+                        // remove redundant children
+                        if (_columnCount < childCount) {
+                            for (x = childCount; _columnCount < childCount; childCount -= 1) {
+                                id = _id(x, y);
+                                _cells[id].remove();
+                            }
                         }
 
                         _$table.append(tr);
                     }
-
-                    _$parent.append(_$table);
                 };
 
                 return _self;
             })();
         }
-    }
-});
-
-namespaces.register({
-    path: 'ui.matrix.$row',
-    init: function () {
-        return function (x, y) {
-            var result = document.createElement('tr');
-        };
     }
 });
