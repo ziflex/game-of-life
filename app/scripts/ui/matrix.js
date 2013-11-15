@@ -84,14 +84,14 @@ namespaces.register({
                 };
 
                 _self.render = function () {
-                    var x, y, tr, td, span, id, childCount;
+                    var x, y, tr, td, span, id, trCount, tdCount;
 
                     if (!_isInitialized) {
                         _init();
                     }
 
                     // remove all elements before rendering
-                    _$table.children().remove();
+                    trCount = _$table[0].childNodes[0].childNodes.length;
 
                     for (y = 0; y <= _rowCount; y += 1) {
 
@@ -100,7 +100,7 @@ namespaces.register({
                         }
 
                         tr = _rows[y];
-                        childCount = tr.children().length;
+                        tdCount = tr.children().length;
 
                         for(x = 0; x <= _columnCount; x += 1) {
                             id = _id(x, y);
@@ -113,20 +113,28 @@ namespaces.register({
                                 _cells[id] = td;
                             }
 
-                            if (x > childCount) {
+                            if (x > tdCount) {
                                 tr.append(_cells[id]);
                             }
                         }
 
                         // remove redundant children
-                        if (_columnCount < childCount) {
-                            for (x = childCount; _columnCount < childCount; childCount -= 1) {
+                        if (_columnCount < tdCount) {
+                            for (x = tdCount; _columnCount < x; x -= 1) {
                                 id = _id(x, y);
                                 _cells[id].remove();
                             }
                         }
 
-                        _$table.append(tr);
+                        if (y > trCount) {
+                            _$table.append(tr);
+                        }
+                    }
+
+                    if (_rowCount < trCount) {
+                        for (y = trCount; _rowCount < y; y -= 1) {
+                            _rows[y].remove();
+                        }
                     }
                 };
 
