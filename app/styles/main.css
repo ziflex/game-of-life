@@ -31,8 +31,5 @@ body {
     width: 30px;
     height: 30px;
     padding: 0px;
-}
-
-.table tbody>tr>td:enabled {
-    cursor: hand;
+    cursor: pointer;!important
 }

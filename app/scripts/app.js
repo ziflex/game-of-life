@@ -13,28 +13,31 @@ namespaces.register({
             /// Private properties
             /// </summary>
             var _self = {},
-                _matrix;
+                _controls = {},
+                _game = $game();
 
             /// <summary>
             /// Private methods
             /// </summary>
             var _handlers = {
                 setRows: function (element) {
-                    _matrix.rows(parseInt(element.value));
+                    _controls.matrix.rows(parseInt(element.value));
                 },
                 setColumns: function (element) {
-                    _matrix.columns(parseInt(element.value));
+                    _controls.matrix.columns(parseInt(element.value));
+                },
+                run: function () {
+                    this.disable();
                 }
             };
 
-            _matrix = $matrix({
+            _controls.matrix = $matrix({
                 parent: $('#matrix')[0],
                 rows: 10,
-                columns: 10,
-                onCellClick: function () {
-
-                }
+                columns: 10
             });
+
+            _controls.button = $('button');
 
             $('[data-action]').on('click', function (event) {
                 var el = $(this),
