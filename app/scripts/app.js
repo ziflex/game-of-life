@@ -31,11 +31,16 @@ namespaces.register({
                 setColumns: function (element) {
                     _controls.matrix.columns(parseInt(element.value));
                 },
-                cellEvent: function (options) {
-                    if (options.event === $gameEvents.onCellDead) {
-                        _controls.matrix.deselect(options.x, options.y);
-                    } else if (options.event === $gameEvents.onCellAlive) {
-                        _controls.matrix.select(options.x, options.y);
+                cellEvent: function (eventName, coordinates) {
+                    switch(eventName) {
+                        case $gameEvents.onCellDead:
+                            _controls.matrix.deselect(coordinates.x, coordinates.y);
+                            break
+                        case $gameEvents.onCellAlive:
+                            _controls.matrix.select(coordinates.x, coordinates.y);
+                            break
+                        default:
+                            break;
                     }
                 },
                 start: function () {

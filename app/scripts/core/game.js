@@ -45,9 +45,9 @@ namespaces.register({
                         return;
                     }
 
-                    if (typeof (from) === 'string' && _map[from]) {
-                        func(_map[from]);
-                    } else if (typeof (from) === 'object' && from.constructor.toString() === 'function Array() { [native code] }') {
+                    if (typeof (from) === 'string' && _map.contains(from)) {
+                        func(_map.get(from));
+                    } else if (Array.isArray(from)) {
                         from.each(function(f){
                             _eachCell(callback, f, where);
                         });
@@ -63,10 +63,10 @@ namespaces.register({
                             return result ? false : true;
                         };
 
-                    if (typeof (from) === 'string' && _map[from]) {
-                        result = _map[from].get(coordinates.x, coordinates.y);
+                    if (typeof (from) === 'string' && _map.contains(from)) {
+                        result = _map.get(from).get(coordinates.x, coordinates.y);
                     } else {
-                        if (typeof (from) === 'object' && from.constructor.toString() === 'function Array() { [native code] }'){
+                        if (Array.isArray(from)){
                             from.each(function(f){
                                 return func(f);
                             });
@@ -217,10 +217,10 @@ namespaces.register({
 
                     switch(options.to) {
                         case $cellGens.none:
-                            _eventEmitter.fire($gameEvents.onCellDead, { event: $gameEvents.onCellDead, coordinates: {x: options.cell.x(), y: options.cell.y()} });
+                            _eventEmitter.fire($gameEvents.onCellDead, {x: options.cell.x(), y: options.cell.y()});
                             break;
                         case $cellGens.young:
-                            _eventEmitter.fire($gameEvents.onCellAlive, { event: $gameEvents.onCellAlive, coordinates: {x: options.cell.x(), y: options.cell.y()} });
+                            _eventEmitter.fire($gameEvents.onCellAlive,  {x: options.cell.x(), y: options.cell.y() });
                             break;
                         case $cellGens.old:
                             break;
