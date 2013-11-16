@@ -18,7 +18,7 @@ namespaces.register({
                 _status = $gameStatus.stopped,
                 _eventEmitter = $eventEmitter(),
                 _pool = [], // cells pool
-                _map = {}, // cells gen map
+                _map = $hash(), // cells gen map
                 _changes = false, // cells changes per cycle
                 _lastCoordinates = [],
                 _cycleCount = 0;
@@ -80,8 +80,8 @@ namespaces.register({
                     return result;
                 },
                 _moveCell = function (cell, from, to) {
-                    var f = _map[from],
-                        t = _map[to];
+                    var f = _map.get(from),
+                        t = _map.get(to);
 
                     if(f && t){
                         if (f.contains(cell)){
@@ -133,7 +133,7 @@ namespaces.register({
                 },
                 _continue = function () {
                     var i,
-                        result = (_map[$cellGens.young].count() > 0 || _map[$cellGens.old].count() > 0) && _changes;
+                        result = (_map.get($cellGens.young).count() > 0 || _map.get($cellGens.old).count() > 0) && _changes;
 
                     if (result) {
                         for (i = 0; i < _lastCoordinates.length; i += 1) {
@@ -161,13 +161,13 @@ namespaces.register({
                                 _pool.push(cell);
                             }
 
-                            _map[$cellGens.none].add(_pool[i-1]);
+                            _map.get($cellGens.none).add(_pool[i-1]);
                         }
                     }
                 },
                 _free = function (from) {
-                    if (from && _map[from]){
-                        _map[from].clear();
+                    if (from && _map.contains(from)){
+                        _map.get(from).clear();
                     } else {
                         _map.each(function(g) {
                             g.clear();
@@ -233,9 +233,9 @@ namespaces.register({
                     $logger.write('Cell x:{0} y:{1} is {2}.', options.cell.x(), options.cell.y(), options.to);
                 };
 
-            _map[$cellGens.none] = $cellCollection();
-            _map[$cellGens.young] = $cellCollection();
-            _map[$cellGens.old] = $cellCollection();
+            _map.add($cellGens.none,$cellCollection());
+            _map.add($cellGens.young, $cellCollection());
+            _map.add($cellGens.old, $cellCollection());
 
             _self.start = function (options) {
                 $logger.write('Game is started.');
@@ -290,7 +290,7 @@ namespaces.register({
                 $logger.write('Game is stopped.');
             };
 
-            _self.get_status = function () {
+            _self.status = function () {
                 return _status;
             };
 

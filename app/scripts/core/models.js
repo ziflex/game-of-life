@@ -2,11 +2,8 @@
 
 namespaces.register({
     path: 'core.models.$cellCollection',
-    dependencies: {
-        'core.models' : ['$eventEmitter', '$hash'],
-        'core.constants' : ['$commonEvents', '$cellGenerations']
-    },
-    init: function($eventEmitter, $hash, $commonEvents, $cellGenerations) {
+    dependencies: ['$eventEmitter', '$hash'],
+    init: function($eventEmitter, $hash) {
         return function () {
             return (function () {
 
@@ -105,8 +102,8 @@ namespaces.register({
         'core.constants' : ['$commonEvents', '$cellGenerations']
     },
     init: function($eventEmitter, $commonEvents, $cellGenerations) {
-        return function () {
-            return (function(x, y) {
+        return function (x, y) {
+            return (function() {
                 /// <summary>
                 /// Private properties
                 /// </summary>

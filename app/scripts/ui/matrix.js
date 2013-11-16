@@ -64,9 +64,15 @@ namespaces.register({
                                 return;
                             }
 
-                            var cell = $(this);
+                            var cell = $(this),
+                                x = cell.attr('data-x'),
+                                y = cell.attr('data-y');
 
-                            _toggleCell(cell, !cell.hasClass('success'));
+                            if (cell.hasClass('success')) {
+                                _self.deselect(x, y);
+                            } else {
+                                _self.select(x, y);
+                            }
                         });
 
                         _state.initialized = true;

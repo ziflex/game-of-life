@@ -18,3 +18,24 @@ namespaces.register({
         };
     }
 });
+
+namespaces.register({
+    path: 'core.utilities.$extenders',
+    init: function () {
+        if (!Array.prototype.each) {
+            Array.prototype.each = function (callback) {
+                var i, max = this.length;
+
+                if (!callback) {
+                    return;
+                }
+
+                for (i = 0; i < max; i += 1) {
+                    callback(this[i]);
+                }
+            }
+        }
+
+        return true;
+    }
+})
