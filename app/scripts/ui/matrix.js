@@ -28,6 +28,12 @@ namespaces.register({
                     _state = {
                         initialized: false,
                         disabled: false
+                    },
+                    _style = {
+                        color: {
+                            selected: '#dff0d8',
+                            unselected: '#fafafa'
+                        }
                     };
 
 
@@ -68,7 +74,7 @@ namespaces.register({
                                 x = cell.attr('data-x'),
                                 y = cell.attr('data-y');
 
-                            if (cell.hasClass('success')) {
+                            if (cell.attr('data-selected') === 'true') {
                                 _self.deselect(x, y);
                             } else {
                                 _self.select(x, y);
@@ -81,11 +87,28 @@ namespaces.register({
                       return 'x' + x +'y' +y;
                     },
                     _toggleCell = function (cell, selected) {
+                        var timer = 400,
+                            isFinished = false,
+                            t = 0,
+                            color;
+
                         if (selected) {
-                            cell.addClass('success');
+                            color = _style.color.selected;
                         } else {
-                            cell.removeClass('success');
+                            color = _style.color.unselected;
                         }
+
+                        cell.attr('data-selected', selected);
+
+                        cell.animate({
+                            backgroundColor: color
+                        }, timer);
+
+                        setTimeout(function () {
+                            alert('from time out');
+                        }, timer);
+
+                        alert('instant!');
                     };
 
                 _self.columns = function (value) {
@@ -178,6 +201,8 @@ namespaces.register({
                                 td.attr('id', id);
                                 td.attr('data-x', x);
                                 td.attr('data-y', y);
+                                td.attr('data-selected', false)
+//                                td.addClass('rounded');
                                 _cache.cells.add(id, td);
                             }
 

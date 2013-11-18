@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "dependencies": {
     "jquery": "~1.9.1",
+    "jquery-color" : ">=2.1.2",
 	"bootstrap": ">=3.0.0"
   }
 }

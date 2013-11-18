@@ -231,6 +231,9 @@ namespaces.register({
                     _moveCell(options.cell, options.from, options.to);
 
                     $logger.write('Cell x:{0} y:{1} is {2}.', options.cell.x(), options.cell.y(), options.to);
+                },
+                _onCompleteLifeCycle = function (event, options) {
+
                 };
 
             _map.add($cellGens.none,$cellCollection());
