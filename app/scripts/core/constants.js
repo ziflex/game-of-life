@@ -23,10 +23,9 @@ namespaces.register({
     path: 'core.constants.$gameEvents',
     init: function () {
         return {
-            onStart: 'onStart',
-            onStop: 'onStop',
-            onCellDead: 'onCellDead',
-            onCellAlive: 'onCellAlive'
+            start: 'start',
+            stop: 'stop',
+            cycleComplete: 'cycleComplete'
         };
     }
 });

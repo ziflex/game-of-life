@@ -86,10 +86,8 @@ namespaces.register({
                     _id = function (x, y) {
                       return 'x' + x +'y' +y;
                     },
-                    _toggleCell = function (cell, selected) {
-                        var timer = 400,
-                            isFinished = false,
-                            t = 0,
+                    _toggleCell = function (cell, selected, callback) {
+                        var timer = 200,
                             color;
 
                         if (selected) {
@@ -100,15 +98,11 @@ namespaces.register({
 
                         cell.attr('data-selected', selected);
 
+                        callback = callback || function () {};
+
                         cell.animate({
                             backgroundColor: color
-                        }, timer);
-
-                        setTimeout(function () {
-                            alert('from time out');
-                        }, timer);
-
-                        alert('instant!');
+                        }, timer, callback);
                     };
 
                 _self.columns = function (value) {
@@ -138,24 +132,24 @@ namespaces.register({
                     });
                 };
 
-                _self.select = function (x, y) {
+                _self.select = function (x, y, callback) {
                     var cell, id = _id(x, y);
 
                     if (!_cache.selectedCells.contains(id)) {
                         cell = _cache.cells.get(id);
 
                         if (cell) {
-                            _toggleCell(cell, true);
+                            _toggleCell(cell, true, callback);
                             _cache.selectedCells.add(id, cell);
                         }
                     }
                 };
 
-                _self.deselect = function (x, y){
+                _self.deselect = function (x, y, callback){
                     var id = _id(x, y), cell = _cache.selectedCells.get(id);
 
                     if (cell) {
-                        _toggleCell(cell, false);
+                        _toggleCell(cell, false, callback);
                         _cache.selectedCells.remove(id);
                     }
                 };

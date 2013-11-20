@@ -174,9 +174,9 @@ namespaces.register({
                         })
                     }
                 },
-                _lifeCycle = function (callback) {
+                _lifeCycle = function (cellCallback, endCycleCallback) {
                     var func = function (el) {
-                        callback(el, _findNeighbors(el));
+                        cellCallback(el, _findNeighbors(el));
                     };
 
                     _cycleCount += 1;
@@ -207,6 +207,10 @@ namespaces.register({
                     _map.each(function(m){
                         m.commitTransaction();
                     });
+
+                    if (endCycleCallback) {
+
+                    }
                 },
                 _onCellChange = function (eventName, options) {
                     if (!options || _status === $gameStatus.stopped) {
@@ -215,18 +219,18 @@ namespaces.register({
 
                     _changes = true;
 
-                    switch(options.to) {
-                        case $cellGens.none:
-                            _eventEmitter.fire($gameEvents.onCellDead, {x: options.cell.x(), y: options.cell.y()});
-                            break;
-                        case $cellGens.young:
-                            _eventEmitter.fire($gameEvents.onCellAlive,  {x: options.cell.x(), y: options.cell.y() });
-                            break;
-                        case $cellGens.old:
-                            break;
-                        default:
-                            break;
-                    }
+//                    switch(options.to) {
+//                        case $cellGens.none:
+//                            _eventEmitter.fire($gameEvents.onCellDead, {x: options.cell.x(), y: options.cell.y()});
+//                            break;
+//                        case $cellGens.young:
+//                            _eventEmitter.fire($gameEvents.onCellAlive,  {x: options.cell.x(), y: options.cell.y() });
+//                            break;
+//                        case $cellGens.old:
+//                            break;
+//                        default:
+//                            break;
+//                    }
 
                     _moveCell(options.cell, options.from, options.to);
 
@@ -241,6 +245,8 @@ namespaces.register({
             _map.add($cellGens.old, $cellCollection());
 
             _self.start = function (options) {
+                var cellCallback, cycleEndCallback;
+
                 $logger.write('Game is started.');
 
                 _status = $gameStatus.started;
@@ -258,23 +264,31 @@ namespaces.register({
                     _findCell(coordinates, $cellGens.none).born();
                 });
 
-                // cells life cycle
-                while(_continue()) {
-                    _lifeCycle(function(cell, neighbors){
-                        neighbors = neighbors || [];
+                cellCallback = function(cell, neighbors){
+                    neighbors = neighbors || [];
 
-                        if (cell.isAlive()) {
-                            // if cell has less than 2 or more then 3 neighbor - it dies.
-                            if (neighbors.length < 2 || neighbors.length > 3) {
-                                cell.kill();
-                            }
-                        } else {
-                            // if cell has 3 neighbors - it gets alive.
-                            if (neighbors.length === 3) {
-                                cell.born();
-                            }
+                    if (cell.isAlive()) {
+                        // if cell has less than 2 or more then 3 neighbor - it dies.
+                        if (neighbors.length < 2 || neighbors.length > 3) {
+                            cell.kill();
                         }
-                    });
+                    } else {
+                        // if cell has 3 neighbors - it gets alive.
+                        if (neighbors.length === 3) {
+                            cell.born();
+                        }
+                    }
+                };
+
+                cycleEndCallback = function () {
+
+                }
+
+
+                // on game start
+                if (_continue()) {
+                    // cells life cycle
+                    _lifeCycle(cellCallback, cycleEndCallback);
                 }
 
                 _self.stop();
