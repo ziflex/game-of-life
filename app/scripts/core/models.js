@@ -343,3 +343,20 @@ namespaces.register({
         }
     }
 });
+
+namespaces.register({
+    path: 'core.models.$message',
+    init: function () {
+        return function (callback, attachments) {
+
+            if (typeof(callback) !== 'function'){
+                throw 'Message must have callback function!';
+            }
+
+            return {
+                attachments: attachments,
+                callback: callback
+            }
+        }
+    }
+});
