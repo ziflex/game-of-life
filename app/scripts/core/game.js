@@ -4,15 +4,16 @@ namespaces.register({
     path: 'core.$game',
     dependencies: {
         'core.utilities' : ['$logger'],
-        'core.models' : ['$hash', '$eventEmitter', '$cell', '$cellCollection'],
+        'core.models' : ['$hash', '$eventEmitter', '$cell', '$cellCollection', '$message'],
         'core.constants' : ['$gameStatuses', '$commonEvents', '$gameEvents', '$cellGenerations']
     },
-    init: function($logger, $hash, $eventEmitter, $cell, $cellCollection, $gameStatus, $commonEvents, $gameEvents, $cellGens) {
+    init: function($logger, $hash, $eventEmitter, $cell, $cellCollection, $message, $gameStatus, $commonEvents, $gameEvents, $cellGens) {
         return (function() {
             /// <summary>
             /// Private properties
             /// </summary>
             var _self = {},
+                _initialized = false,
                 _xMax = 0,
                 _yMax = 0,
                 _status = $gameStatus.stopped,
@@ -20,8 +21,18 @@ namespaces.register({
                 _pool = [], // cells pool
                 _map = $hash(), // cells gen map
                 _changes = false, // cells changes per cycle
+                _message,
                 _lastCoordinates = [],
-                _cycleCount = 0;
+                _cycleCount = 0,
+                _offsets = [
+                    {x: -1, y: 0},
+                    {x: -1, y: 1},
+                    {x: -1, y: -1},
+                    {x: 0, y: 1},
+                    {x: 0, y: -1},
+                    {x: 1, y: 0},
+                    {x: 1, y: 1},
+                    {x: 1, y: -1}];
 
 
             /// <summary>
@@ -93,16 +104,6 @@ namespaces.register({
                 _findNeighbors = function (cell) {
                     var neighbor,
                         result = [],
-                        offsets = [
-                            {x: -1, y: 0},
-                            {x: -1, y: 1},
-                            {x: -1, y: -1},
-                            {x: 0, y: 1},
-                            {x: 0, y: -1},
-                            {x: 1, y: 0},
-                            {x: 1, y: 1},
-                            {x: 1, y: -1}],
-
                         getNeighborCoordinates = function (offset) {
                             var x, y;
 
@@ -120,7 +121,7 @@ namespaces.register({
                             return {x : x, y: y};
                         };
 
-                    offsets.each(function(offset){
+                    _offsets.each(function(offset){
                         // get only live cells and not of the current generation
                         neighbor = _findCell(getNeighborCoordinates(offset), $cellGens.old);
 
@@ -128,21 +129,6 @@ namespaces.register({
                             result.push(neighbor);
                         }
                     });
-
-                    return result;
-                },
-                _continue = function () {
-                    var i,
-                        result = (_map.get($cellGens.young).count() > 0 || _map.get($cellGens.old).count() > 0) && _changes;
-
-                    if (result) {
-                        for (i = 0; i < _lastCoordinates.length; i += 1) {
-                            if (!_findCell(_lastCoordinates[i], [$cellGens.young, $cellGens.old])){
-                                result = false;
-                                break;
-                            }
-                        }
-                    }
 
                     return result;
                 },
@@ -174,19 +160,31 @@ namespaces.register({
                         })
                     }
                 },
-                _lifeCycle = function (cellCallback, endCycleCallback) {
+                _checkRule = function(cell, neighbors){
+                    neighbors = neighbors || [];
+
+                    if (cell.isAlive()) {
+                        // if cell has less than 2 or more then 3 neighbor - it dies.
+                        if (neighbors.length < 2 || neighbors.length > 3) {
+                            cell.kill();
+                        }
+                    } else {
+                        // if cell has 3 neighbors - it gets alive.
+                        if (neighbors.length === 3) {
+                            cell.born();
+                        }
+                    }
+                },
+                _lifeCycle = function () {
                     var func = function (el) {
-                        cellCallback(el, _findNeighbors(el));
-                    };
+                            _checkRule(el, _findNeighbors(el));
+                        };
 
                     _cycleCount += 1;
                     $logger.write('Cycle number {0}', _cycleCount);
 
                     // save the previous cells position
-                    _lastCoordinates.length = 0;
-                    _eachCell(function(c){
-                        _lastCoordinates.push({x: c.x(), y: c.y()});
-                    }, [$cellGens.young,  $cellGens.old]);
+                    _lastCoordinates.push(_encodePosition([ $cellGens.young, $cellGens.old]));
 
                     // update young generation
                     _eachCell(function (el){
@@ -207,9 +205,35 @@ namespaces.register({
                     _map.each(function(m){
                         m.commitTransaction();
                     });
+                },
+                _canContinue = function () {
+                    var matchedPosition,
+                        encodedPosition,
+                        result = (_map.get($cellGens.young).count() > 0 || _map.get($cellGens.old).count() > 0) && _changes;
 
-                    if (endCycleCallback) {
+                    if (result && _lastCoordinates.length > 0) {
+                        encodedPosition = _encodePosition([$cellGens.young, $cellGens.old]);
+                        matchedPosition = _lastCoordinates[encodedPosition];
 
+                        if  (matchedPosition) {
+                            result = false;
+                        }
+                    }
+
+                    return result;
+                },
+                _continue = function () {
+                    if (_canContinue()) {
+                        // clear message attachment
+                        _message.attachments.length = 0;
+
+                        // run the game cycle
+                        _lifeCycle();
+
+                        // fire event about completing game cycle and wait invoking callback to continue
+                        _eventEmitter.fire($gameEvents.cycleComplete, _message)
+                    } else {
+                        _self.stop();
                     }
                 },
                 _onCellChange = function (eventName, options) {
@@ -217,27 +241,36 @@ namespaces.register({
                         return;
                     }
 
+                    // for rule checking
                     _changes = true;
 
-//                    switch(options.to) {
-//                        case $cellGens.none:
-//                            _eventEmitter.fire($gameEvents.onCellDead, {x: options.cell.x(), y: options.cell.y()});
-//                            break;
-//                        case $cellGens.young:
-//                            _eventEmitter.fire($gameEvents.onCellAlive,  {x: options.cell.x(), y: options.cell.y() });
-//                            break;
-//                        case $cellGens.old:
-//                            break;
-//                        default:
-//                            break;
-//                    }
+                    // if it's not initialization events
+                    if (_initialized) {
+                        // don't render old cells
+                        // they are already rendered
+                        if (options.to !== $cellGens.old) {
+                            // for outer subscriber
+                            _message.attachments.push({
+                                gen: options.to,
+                                x: options.cell.x(),
+                                y: options.cell.y()
+                            });
+                        }
+                    }
 
+                    // collection migration
                     _moveCell(options.cell, options.from, options.to);
 
                     $logger.write('Cell x:{0} y:{1} is {2}.', options.cell.x(), options.cell.y(), options.to);
                 },
-                _onCompleteLifeCycle = function (event, options) {
+                _encodePosition = function (from) {
+                    var result = '';
 
+                    _eachCell(function(c){
+                        result += 'x' + c.x() + 'y' + c.y() + ';';
+                    }, from);
+
+                    return result;
                 };
 
             _map.add($cellGens.none,$cellCollection());
@@ -245,16 +278,20 @@ namespaces.register({
             _map.add($cellGens.old, $cellCollection());
 
             _self.start = function (options) {
-                var cellCallback, cycleEndCallback;
-
                 $logger.write('Game is started.');
 
                 _status = $gameStatus.started;
-                _eventEmitter.fire($gameEvents.onStart);
+                _eventEmitter.fire($gameEvents.start);
 
                 _xMax = options.xMax;
                 _yMax = options.yMax;
                 _cycleCount = 0;
+                _lastCoordinates.length = 0;
+
+                // use one instance per game
+                _message = $message(function () {
+                    _continue();
+                }, []);
 
                 // fill collections
                 _populate(options.xMax, options.yMax);
@@ -264,38 +301,14 @@ namespaces.register({
                     _findCell(coordinates, $cellGens.none).born();
                 });
 
-                cellCallback = function(cell, neighbors){
-                    neighbors = neighbors || [];
+                _initialized = true;
 
-                    if (cell.isAlive()) {
-                        // if cell has less than 2 or more then 3 neighbor - it dies.
-                        if (neighbors.length < 2 || neighbors.length > 3) {
-                            cell.kill();
-                        }
-                    } else {
-                        // if cell has 3 neighbors - it gets alive.
-                        if (neighbors.length === 3) {
-                            cell.born();
-                        }
-                    }
-                };
-
-                cycleEndCallback = function () {
-
-                }
-
-
-                // on game start
-                if (_continue()) {
-                    // cells life cycle
-                    _lifeCycle(cellCallback, cycleEndCallback);
-                }
-
-                _self.stop();
+                _continue();
             };
 
             _self.stop = function () {
                 _status = $gameStatus.stopped;
+                _initialized = false;
 
                 _eachCell(function(c){
                     c.kill();
@@ -303,7 +316,7 @@ namespaces.register({
 
                 _free();
 
-                _eventEmitter.fire($gameEvents.onStop);
+                _eventEmitter.fire($gameEvents.stop);
                 $logger.write('Game is stopped.');
             };
 
