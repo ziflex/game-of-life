@@ -30,12 +30,12 @@
 
           <div class="navbar-form" role="search">
               <div class="form-group">
-                  <input type="number" class="form-control" data-action='setColumns' placeholder="Columns" value="10" min="5" required>
+                  <input type="number" class="form-control columns-count" data-change-action='setColumns' placeholder="Columns" value="20" min="10" required>
               </div>
               <div class="form-group">
-                  <input type="number" class="form-control" data-action='setRows' placeholder="Rows" value="10" min="5" required>
+                  <input type="number" class="form-control rows-count" data-change-action='setRows' placeholder="Rows" value="20" min="10" required>
               </div>
-              <button type="button" class="btn btn-default" data-action='start'>Start</button>
+              <button type="button" class="btn btn-default" data-click-action='start'>Start</button>
           </div>
       </nav>
         <!--[if lt IE 7]>

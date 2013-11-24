@@ -87,7 +87,7 @@ namespaces.register({
                       return 'x' + x +'y' +y;
                     },
                     _toggleCell = function (cell, selected, callback) {
-                        var timer = 200,
+                        var timer = 400,
                             color;
 
                         if (selected) {
@@ -139,8 +139,8 @@ namespaces.register({
                         cell = _cache.cells.get(id);
 
                         if (cell) {
-                            _toggleCell(cell, true, callback);
                             _cache.selectedCells.add(id, cell);
+                            _toggleCell(cell, true, callback);
                         }
                     }
                 };
@@ -149,8 +149,8 @@ namespaces.register({
                     var id = _id(x, y), cell = _cache.selectedCells.get(id);
 
                     if (cell) {
-                        _toggleCell(cell, false, callback);
                         _cache.selectedCells.remove(id);
+                        _toggleCell(cell, false, callback);
                     }
                 };
 
@@ -180,6 +180,7 @@ namespaces.register({
 
                     for (y = 0; y <= _rowCount; y += 1) {
 
+                        console.log(y);
                         if (!_cache.rows.contains(y)) {
                             _cache.rows.add(y,$('<tr></tr>'));
                         }
@@ -195,8 +196,7 @@ namespaces.register({
                                 td.attr('id', id);
                                 td.attr('data-x', x);
                                 td.attr('data-y', y);
-                                td.attr('data-selected', false)
-//                                td.addClass('rounded');
+                                td.attr('data-selected', false);
                                 _cache.cells.add(id, td);
                             }
 
@@ -209,6 +209,11 @@ namespaces.register({
                         if (_columnCount < tdCount) {
                             for (x = tdCount; _columnCount < x; x -= 1) {
                                 id = _id(x, y);
+
+                                if (_cache.cells.get(id).attr('data-selected') === 'true') {
+                                    _self.deselect(x, y);
+                                }
+
                                 _cache.cells.get(id).remove();
                             }
                         }
@@ -220,6 +225,18 @@ namespaces.register({
 
                     if (_rowCount < trCount) {
                         for (y = trCount; _rowCount < y; y -= 1) {
+
+                            // remove selected cells in removing row
+                            tdCount = _cache.rows.get(y)[0].childNodes.length;
+
+                            for (x = 0; x < tdCount; x += 1) {
+                                id = _id(x, y);
+
+                                if (_cache.cells.get(id).attr('data-selected') === 'true') {
+                                    _self.deselect(x, y);
+                                }
+                            }
+
                             _cache.rows.get(y).remove();
                         }
                     }

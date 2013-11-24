@@ -209,7 +209,11 @@ namespaces.register({
                 _canContinue = function () {
                     var matchedPosition,
                         encodedPosition,
-                        result = (_map.get($cellGens.young).count() > 0 || _map.get($cellGens.old).count() > 0) && _changes;
+                        result = _status !== $gameStatus.stopped;
+
+                    if (result) {
+                        result = (_map.get($cellGens.young).count() > 0 || _map.get($cellGens.old).count() > 0) && _changes
+                    }
 
                     if (result && _lastCoordinates.length > 0) {
                         encodedPosition = _encodePosition([$cellGens.young, $cellGens.old]);
@@ -278,6 +282,10 @@ namespaces.register({
             _map.add($cellGens.old, $cellCollection());
 
             _self.start = function (options) {
+                if (_status === $gameStatus.started) {
+                    return;
+                }
+
                 $logger.write('Game is started.');
 
                 _status = $gameStatus.started;
@@ -307,6 +315,10 @@ namespaces.register({
             };
 
             _self.stop = function () {
+                if (_status === $gameStatus.stopped) {
+                    return;
+                }
+
                 _status = $gameStatus.stopped;
                 _initialized = false;
 
@@ -315,6 +327,7 @@ namespaces.register({
                 }, [$cellGens.young, $cellGens.old]);
 
                 _free();
+                _lastCoordinates.length = 0;
 
                 _eventEmitter.fire($gameEvents.stop);
                 $logger.write('Game is stopped.');
