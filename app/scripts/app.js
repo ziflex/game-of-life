@@ -80,6 +80,11 @@ namespaces.register({
                         if ($game.status() === $gameStatuses.started) {
                             $game.stop();
                         }
+                    },
+                    clear: function () {
+                        if ($game.status() === $gameStatuses.stopped) {
+                            _controls.matrix.deselectAll();
+                        }
                     }
             },
                 eventHandler = function(event) {
@@ -96,7 +101,7 @@ namespaces.register({
 
             $game.on($gameEvents.start, function () {
                 _controls.matrix.disable(true);
-                _controls.button.toggle();
+                _controls.starter.toggle();
                 _state.startTime = new Date();
             });
 
@@ -104,17 +109,21 @@ namespaces.register({
 
             $game.on($gameEvents.stop, function () {
                 _controls.matrix.disable(false);
-                _controls.button.toggle();
+                _controls.starter.toggle();
                 _state.endTime = new Date();
 
             });
 
-            _controls.button = {
-                el: $('button'),
+            _controls.starter = {
+                el: $('#starter'),
                 toggle: function () {
                     var action = this.el.attr('data-click-action') === 'stop' ? 'start' : 'stop';
+
+                    this.el.toggleClass('btn-success', action === 'start');
+                    this.el.toggleClass('btn-danger', action !== 'start');
+
                     this.el.attr('data-click-action', action);
-                    this.el.html(action);
+                    this.el.html(action === 'start' ? 'Start' : 'Stop');
                 }
             };
 

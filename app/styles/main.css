@@ -4,6 +4,10 @@ body {
     color: #333;
 }
 
+.btn {
+    width: 60px;
+}
+
 .hero-unit {
     margin: 50px auto 0 auto;
     width: 300px;
@@ -32,13 +36,4 @@ body {
     height: 20px;
     padding: 0px;
     cursor: pointer;!important
-}
-
-td.rounded {
-    border-radius: 25px; /* Standard */
-    -o-border-radius: 25px; /* Opera 10.x */
-    -moz-border-radius: 25px; /* Mozilla/Firefox */
-    -icab-border-radius: 25px; /* iCab */
-    -khtml-border-radius: 25px; /* KHTML/Konqueror */
-    -webkit-border-radius: 25px; /* Webkit/Safari/Chrome/etcetera */
 }
