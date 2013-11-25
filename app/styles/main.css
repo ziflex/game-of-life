@@ -4,6 +4,10 @@ body {
     color: #333;
 }
 
+.btn {
+    width: 60px;
+}
+
 .hero-unit {
     margin: 50px auto 0 auto;
     width: 300px;
@@ -28,11 +32,8 @@ body {
 }
 
 .table tbody>tr>td {
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
     padding: 0px;
-}
-
-.table tbody>tr>td:enabled {
-    cursor: hand;
+    cursor: pointer;!important
 }
