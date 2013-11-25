@@ -169,26 +169,28 @@ namespaces.register({
                 };
 
                 _self.render = function () {
-                    var x, y, tr, td, span, id, trCount, tdCount;
+                    var x, y, tr, td, span, id, curRowMaxIndex, curColMaxIndex,
+                        newRowMaxIndex, newColMaxIndex;
 
                     if (!_state.initialized) {
                         _init();
                     }
 
                     // remove all elements before rendering
-                    trCount = _table.$body[0].childNodes.length;
+                    newRowMaxIndex = _rowCount -1;
+                    curRowMaxIndex = _table.$body[0].childNodes.length-1;
 
-                    for (y = 0; y <= _rowCount; y += 1) {
+                    for (y = 0; y < _rowCount; y += 1) {
 
-                        console.log(y);
                         if (!_cache.rows.contains(y)) {
                             _cache.rows.add(y,$('<tr></tr>'));
                         }
 
                         tr = _cache.rows.get(y);
-                        tdCount = tr[0].childNodes.length;
+                        newColMaxIndex = _columnCount - 1;
+                        curColMaxIndex = tr[0].childNodes.length-1;
 
-                        for(x = 0; x <= _columnCount; x += 1) {
+                        for(x = 0; x < _columnCount; x += 1) {
                             id = _id(x, y);
 
                             if (!_cache.cells.contains(id)) {
@@ -200,14 +202,14 @@ namespaces.register({
                                 _cache.cells.add(id, td);
                             }
 
-                            if (x > tdCount) {
+                            if (x >= curColMaxIndex) {
                                 tr.append(_cache.cells.get(id));
                             }
                         }
 
                         // remove redundant children
-                        if (_columnCount < tdCount) {
-                            for (x = tdCount; _columnCount < x; x -= 1) {
+                        if (newColMaxIndex < curColMaxIndex) {
+                            for (x = curColMaxIndex; newColMaxIndex < x; x -= 1) {
                                 id = _id(x, y);
 
                                 if (_cache.cells.get(id).attr('data-selected') === 'true') {
@@ -218,18 +220,18 @@ namespaces.register({
                             }
                         }
 
-                        if (y > trCount) {
+                        if (y >= curRowMaxIndex) {
                             _table.$body.append(tr);
                         }
                     }
 
-                    if (_rowCount < trCount) {
-                        for (y = trCount; _rowCount < y; y -= 1) {
+                    if (newRowMaxIndex < curRowMaxIndex) {
+                        for (y = curRowMaxIndex; newRowMaxIndex < y; y -= 1) {
 
                             // remove selected cells in removing row
-                            tdCount = _cache.rows.get(y)[0].childNodes.length;
+                            curColMaxIndex = _cache.rows.get(y)[0].childNodes.length;
 
-                            for (x = 0; x < tdCount; x += 1) {
+                            for (x = 0; x < curColMaxIndex; x += 1) {
                                 id = _id(x, y);
 
                                 if (_cache.cells.get(id).attr('data-selected') === 'true') {

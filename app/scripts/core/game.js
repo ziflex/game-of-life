@@ -112,10 +112,14 @@ namespaces.register({
 
                             if (x < 0) {
                                 x = _xMax;
+                            } else if (x > _xMax) {
+                                x = 0;
                             }
 
                             if (y < 0) {
                                 y = _yMax;
+                            } else if (y > _yMax) {
+                                y = 0;
                             }
 
                             return {x : x, y: y};
@@ -291,8 +295,8 @@ namespaces.register({
                 _status = $gameStatus.started;
                 _eventEmitter.fire($gameEvents.start);
 
-                _xMax = options.xMax;
-                _yMax = options.yMax;
+                _xMax = options.xMax-1;
+                _yMax = options.yMax-1;
                 _cycleCount = 0;
                 _lastCoordinates.length = 0;
 
