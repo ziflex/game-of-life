@@ -75,9 +75,9 @@ namespaces.register({
                                 y = cell.attr('data-y');
 
                             if (cell.attr('data-selected') === 'true') {
-                                _self.deselect(x, y);
+                                _deselect(x, y, null, true);
                             } else {
-                                _self.select(x, y);
+                                _select(x, y, null, true);
                             }
                         });
 
@@ -86,8 +86,8 @@ namespaces.register({
                     _id = function (x, y) {
                       return 'x' + x +'y' +y;
                     },
-                    _toggleCell = function (cell, selected, callback) {
-                        var timer = 400,
+                    _toggleCell = function (cell, selected, callback, noAnimation) {
+                        var timer = noAnimation ? 1 : 400,
                             color;
 
                         if (selected) {
@@ -103,6 +103,26 @@ namespaces.register({
                         cell.animate({
                             backgroundColor: color
                         }, timer, callback);
+                    },
+                    _select = function (x, y, callback, noAnimation) {
+                        var cell, id = _id(x, y);
+
+                        if (!_cache.selectedCells.contains(id)) {
+                            cell = _cache.cells.get(id);
+
+                            if (cell) {
+                                _cache.selectedCells.add(id, cell);
+                                _toggleCell(cell, true, callback, noAnimation);
+                            }
+                        }
+                    },
+                    _deselect = function (x, y, callback, noAnimation){
+                        var id = _id(x, y), cell = _cache.selectedCells.get(id);
+
+                        if (cell) {
+                            _cache.selectedCells.remove(id);
+                            _toggleCell(cell, false, callback, noAnimation);
+                        }
                     };
 
                 _self.columns = function (value) {
@@ -133,30 +153,16 @@ namespaces.register({
                 };
 
                 _self.select = function (x, y, callback) {
-                    var cell, id = _id(x, y);
-
-                    if (!_cache.selectedCells.contains(id)) {
-                        cell = _cache.cells.get(id);
-
-                        if (cell) {
-                            _cache.selectedCells.add(id, cell);
-                            _toggleCell(cell, true, callback);
-                        }
-                    }
+                    _select(x, y, callback);
                 };
 
                 _self.deselect = function (x, y, callback){
-                    var id = _id(x, y), cell = _cache.selectedCells.get(id);
-
-                    if (cell) {
-                        _cache.selectedCells.remove(id);
-                        _toggleCell(cell, false, callback);
-                    }
+                    _deselect(x, y, callback);
                 };
 
                 _self.deselectAll = function () {
                     _cache.selectedCells.clear(function(c){
-                        _toggleCell(c, false);
+                        _toggleCell(c, false, null, true);
                     });
                 };
 
