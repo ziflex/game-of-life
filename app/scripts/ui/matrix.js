@@ -54,6 +54,7 @@ namespaces.register({
                         }
                     },
                     _init = function () {
+                        var click;
                         _validate();
 
                         _rowCount = options.rows;
@@ -65,19 +66,28 @@ namespaces.register({
                         _table.$el.addClass('table table-bordered');
                         _table.$body = _table.$el.find('tbody');
 
-                        _table.$body.on('click', 'td', function () {
-                            if (_state.disabled) {
-                                return;
-                            }
-
-                            var cell = $(this),
-                                x = cell.attr('data-x'),
+                        click = function (cell) {
+                            var x = cell.attr('data-x'),
                                 y = cell.attr('data-y');
 
                             if (cell.attr('data-selected') === 'true') {
                                 _deselect(x, y, null, true);
                             } else {
                                 _select(x, y, null, true);
+                            }
+                        };
+
+                        _table.$body.on('click', 'td', function () {
+                            if (_state.disabled) {
+                                return;
+                            }
+
+                            click($(this));
+                        });
+
+                        _table.$body.on('mouseenter', 'td', function (event) {
+                            if (event.which === 1 && !_state.disabled) {
+                                click($(this));
                             }
                         });
 
@@ -144,7 +154,7 @@ namespaces.register({
                 };
 
                 _self.getSelected = function () {
-                    return _cache.selectedCells.toArray(function (v, k) {
+                    return _cache.selectedCells.toArray(function (v) {
                         return {
                             x: parseInt(v.attr('data-x'), 10),
                             y: parseInt(v.attr('data-y'), 10)
