@@ -100,6 +100,8 @@ namespaces.register({
             $('[data-change-action]').on('change', eventHandler);
 
             $game.on($gameEvents.start, function () {
+                _controls.columnsCount.disable(true);
+                _controls.rowsCount.disable(true);
                 _controls.matrix.disable(true);
                 _controls.starter.toggle();
                 _state.startTime = new Date();
@@ -108,6 +110,8 @@ namespaces.register({
             $game.on($gameEvents.cycleComplete, _handlers.render);
 
             $game.on($gameEvents.stop, function () {
+                _controls.columnsCount.disable(false);
+                _controls.rowsCount.disable(false);
                 _controls.matrix.disable(false);
                 _controls.starter.toggle();
                 _state.endTime = new Date();
@@ -131,6 +135,13 @@ namespaces.register({
                 el: $('.columns-count'),
                 val: function () {
                     return parseInt(this.el.val(), 10);
+                },
+                disable: function (val) {
+                    if (typeof(val) === 'boolean' ) {
+                        this.el.prop('disabled', val);
+                    }
+
+                    return this.el.prop('disabled');
                 }
             };
 
@@ -138,6 +149,13 @@ namespaces.register({
                 el: $('.rows-count'),
                 val: function () {
                     return parseInt(this.el.val(), 10);
+                },
+                disable: function (val) {
+                    if (typeof(val) === 'boolean' ) {
+                        this.el.prop('disabled', val);
+                    }
+
+                    return this.el.prop('disabled');
                 }
             };
 
