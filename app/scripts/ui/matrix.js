@@ -86,7 +86,7 @@ namespaces.register({
                         });
 
                         _table.$body.on('mouseenter', 'td', function (event) {
-                            if (event.which === 1 && !_state.disabled) {
+                            if (event.buttons === 1 && !_state.disabled) {
                                 click($(this));
                             }
                         });
