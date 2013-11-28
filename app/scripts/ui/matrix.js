@@ -86,7 +86,15 @@ namespaces.register({
                         });
 
                         _table.$body.on('mouseenter', 'td', function (event) {
-                            if (event.buttons === 1 && !_state.disabled) {
+                            var button;
+
+                            if (typeof(event.buttons) === 'undefined') { // chrome
+                                button = event.which;
+                            } else {
+                                button = event.buttons;
+                            }
+
+                            if (button === 1 && !_state.disabled) {
                                 click($(this));
                             }
                         });
