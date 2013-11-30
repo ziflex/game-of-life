@@ -18,7 +18,7 @@ namespaces.register({
                 _yMax = 0,
                 _status = $gameStatus.stopped,
                 _eventEmitter = $eventEmitter(),
-                _pool = [], // cells pool
+                _pool = $cellCollection(), // cells pool
                 _map = $hash(), // cells gen map
                 _changes = false, // cells changes per cycle
                 _message,
@@ -145,13 +145,13 @@ namespaces.register({
                     for (x = 0; x < xMax; x += 1) {
                         for (y = 0; y < yMax; y += 1) {
                             i += 1;
-                            if (_pool.length < i) {
+                            if (!_pool.contains(x, y)) {
                                 cell = $cell(x, y);
                                 cell.on($commonEvents.changed, _onCellChange);
-                                _pool.push(cell);
+                                _pool.add(cell);
                             }
 
-                            _map.get($cellGens.none).add(_pool[i-1]);
+                            _map.get($cellGens.none).add(_pool.get(x, y));
                         }
                     }
                 },

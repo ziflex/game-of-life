@@ -66,8 +66,8 @@ namespaces.register({
                     clear: function () {
                         _data.clear();
                     },
-                    contains: function (cell){
-                        return _data.contains(_indexOf(cell));
+                    contains: function (p1, p2){
+                        return _data.contains(_indexOf(p1, p2));
                     },
                     beginTransaction: function () {
                         _transaction = true;
