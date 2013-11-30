@@ -8,6 +8,10 @@ namespaces.register({
                 var str = arguments[0],
                     args = arguments;
 
+                if (!window.gol_debug) {
+                    return;
+                }
+
                 console.log(str.replace(/{(\d+)}/g, function(match, number) {
                     return typeof arguments[0] != 'undefined'
                         ? args[parseInt(number) + 1]
